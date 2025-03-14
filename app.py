@@ -2,7 +2,9 @@ import streamlit as st
 import pickle
 import numpy as np
 
+# Streamlit Page Config (Must be First)
 st.set_page_config(page_title="Parkinson's Disease Detector", layout="wide")
+
 
 # Load trained models
 def load_model(filename):
