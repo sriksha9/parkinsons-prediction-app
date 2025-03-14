@@ -12,7 +12,7 @@ def load_model(filename):
         with open(filename, "rb") as f:
             return pickle.load(f)
     else:
-        st.error(f" Error: The model file '{filename}' is missing. Upload it manually in Hugging Face Spaces.")
+        st.error(f"  Error: The model file '{filename}' is missing. Upload it manually in Hugging Face Spaces.")
         return None
 
 # Load models
@@ -30,14 +30,42 @@ else:
     # Clinical Data Inputs (All 32 Features)
     st.header("Clinical Data")
     age = st.slider("Age", 30, 90, 60)
+    gender = st.selectbox("Gender", ["Male", "Female"])
+    ethnicity = st.selectbox("Ethnicity", ["Asian", "Black", "White", "Other"])
+    education_level = st.slider("Education Level (Years)", 0, 20, 12)
     bmi = st.number_input("BMI", min_value=10.0, max_value=40.0, step=0.1)
+    smoking = st.selectbox("Smoking", [0, 1])
+    alcohol_consumption = st.selectbox("Alcohol Consumption", [0, 1])
+    physical_activity = st.slider("Physical Activity Level", 0, 10, 5)
+    diet_quality = st.slider("Diet Quality Score", 0, 10, 5)
     sleep_quality = st.slider("Sleep Quality", 0, 10, 5)
+    family_history = st.selectbox("Family History of Parkinson’s", [0, 1])
+    brain_injury = st.selectbox("Traumatic Brain Injury", [0, 1])
+    hypertension = st.selectbox("Hypertension", [0, 1])
+    diabetes = st.selectbox("Diabetes", [0, 1])
+    depression = st.selectbox("Depression", [0, 1])
+    stroke = st.selectbox("Stroke", [0, 1])
+    systolic_bp = st.number_input("Systolic BP", 80, 200, 120)
+    diastolic_bp = st.number_input("Diastolic BP", 50, 130, 80)
+    cholesterol_total = st.number_input("Total Cholesterol", 100, 300, 180)
+    cholesterol_ldl = st.number_input("LDL Cholesterol", 50, 200, 100)
+    cholesterol_hdl = st.number_input("HDL Cholesterol", 20, 100, 50)
+    cholesterol_triglycerides = st.number_input("Triglycerides", 50, 300, 150)
+
+    updrs = st.slider("UPDRS Score", 0, 100, 50)
+    moca = st.slider("MoCA Score", 0, 30, 15)
+    functional_assessment = st.slider("Functional Assessment Score", 0, 100, 50)
+    speech_problems = st.selectbox("Speech Problems", [0, 1])
+    sleep_disorders = st.selectbox("Sleep Disorders", [0, 1])
+    constipation = st.selectbox("Constipation", [0, 1])
+
+    # Motor Symptoms
     tremor = st.selectbox("Tremor", [0, 1])
     rigidity = st.selectbox("Rigidity", [0, 1])
     bradykinesia = st.selectbox("Bradykinesia", [0, 1])
     postural_instability = st.selectbox("Postural Instability", [0, 1])
-    
-    # Voice Data Inputs (Now Includes 22 Features)
+
+    # Voice Data Inputs (All 22 Features)
     st.header("Voice Data")
     mdvp_fo = st.slider("MDVP:Fo (Hz)", 80.0, 300.0, step=0.1)
     mdvp_fhi = st.slider("MDVP:Fhi (Hz)", 100.0, 600.0, step=0.1)
@@ -47,7 +75,7 @@ else:
     mdvp_rap = st.slider("MDVP:RAP", 0.0, 0.2, step=0.001)
     mdvp_ppq = st.slider("MDVP:PPQ", 0.0, 0.2, step=0.001)
     jitter_ddp = st.slider("Jitter:DDP", 0.0, 0.2, step=0.001)
-    
+
     mdvp_shimmer = st.slider("MDVP:Shimmer", 0.0, 1.0, step=0.01)
     mdvp_shimmer_db = st.slider("MDVP:Shimmer(dB)", 0.0, 2.0, step=0.01)
     shimmer_apq3 = st.slider("Shimmer:APQ3", 0.0, 0.5, step=0.001)
@@ -66,39 +94,20 @@ else:
 
     if st.button("Predict"):
         # Prepare input features
-        clinical_features = np.array([[age, bmi, sleep_quality, tremor, rigidity, bradykinesia, postural_instability]])
+        clinical_features = np.array([[age, bmi, sleep_quality, tremor, rigidity, bradykinesia, postural_instability,
+                                       cholesterol_total, cholesterol_ldl, cholesterol_hdl, cholesterol_triglycerides,
+                                       updrs, moca, functional_assessment, speech_problems, sleep_disorders, constipation]])
 
         voice_features = np.array([[mdvp_fo, mdvp_fhi, mdvp_flo, mdvp_jitter, mdvp_jitter_abs, mdvp_rap, mdvp_ppq,
                                     jitter_ddp, mdvp_shimmer, mdvp_shimmer_db, shimmer_apq3, shimmer_apq5, mdvp_apq,
                                     shimmer_dda, nhr, hnr, rpde, dfa, spread1, spread2, d2, ppe]])
 
-        # Debugging: Print expected features
-        st.write(" Clinical Model expects:", model_clinical.n_features_in_, "features")
-        st.write(" Voice Model expects:", model_voice.n_features_in_, "features")
+        # Predictions
+        clinical_pred = model_clinical.predict(clinical_features)[0]
+        voice_pred = model_voice.predict(voice_features)[0]
 
-        # Ensure input shape matches model expectation
-        if clinical_features.shape[1] != model_clinical.n_features_in_:
-            st.error(f" Error: Clinical model expects {model_clinical.n_features_in_} features, but received {clinical_features.shape[1]}.")
-        elif voice_features.shape[1] != model_voice.n_features_in_:
-            st.error(f" Error: Voice model expects {model_voice.n_features_in_} features, but received {voice_features.shape[1]}.")
-        else:
-            # Get Predictions
-            clinical_pred = model_clinical.predict(clinical_features)[0]
-            voice_pred = model_voice.predict(voice_features)[0]
-
-            # Get confidence scores
-            clinical_proba = model_clinical.predict_proba(clinical_features)[0][1] * 100
-            voice_proba = model_voice.predict_proba(voice_features)[0][1] * 100
-
-            # Final Diagnosis
-            if clinical_pred == 1 or voice_pred == 1:
-                diagnosis = "Parkinson's Detected"
-            else:
-                diagnosis = "No Parkinson's Detected"
-
-            st.success(f"Prediction: {diagnosis}")
-            st.write(f"Clinical Model Confidence: {clinical_proba:.2f}%")
-            st.write(f"Voice Model Confidence: {voice_proba:.2f}%")
+        diagnosis = "Parkinson's Detected" if clinical_pred == 1 or voice_pred == 1 else "No Parkinson's Detected"
+        st.success(f"Prediction: {diagnosis}")
 
 # Footer
 st.markdown("Developed with  using Streamlit")
