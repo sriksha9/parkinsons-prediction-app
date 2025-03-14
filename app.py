@@ -12,7 +12,7 @@ def load_model(filename):
         with open(filename, "rb") as f:
             return pickle.load(f)
     else:
-        st.error(f"  Error: The model file '{filename}' is missing. Ensure it is in the correct directory.")
+        st.error(f"❌ Error: The model file '{filename}' is missing. Ensure it is in the correct directory.")
         return None
 
 # Load updated models
@@ -58,6 +58,9 @@ else:
     speech_problems = st.selectbox("Speech Problems", [0, 1])
     sleep_disorders = st.selectbox("Sleep Disorders", [0, 1])
     constipation = st.selectbox("Constipation", [0, 1])
+    muscle_rigidity = st.slider("Muscle Rigidity Level", 0, 10, 5)
+    gait_abnormality = st.slider("Gait Abnormality Score", 0, 10, 5)
+    reaction_time = st.slider("Reaction Time", 0.0, 1.0, step=0.01)
 
     # Motor Symptoms
     tremor = st.selectbox("Tremor", [0, 1])
@@ -98,7 +101,8 @@ else:
                                        smoking, alcohol_consumption, physical_activity, diet_quality, family_history,
                                        brain_injury, hypertension, diabetes, depression, stroke, systolic_bp, 
                                        diastolic_bp, cholesterol_total, cholesterol_ldl, cholesterol_hdl, cholesterol_triglycerides,
-                                       updrs, moca, functional_assessment, speech_problems, sleep_disorders, constipation]])
+                                       updrs, moca, functional_assessment, speech_problems, sleep_disorders, constipation,
+                                       muscle_rigidity, gait_abnormality, reaction_time]])
 
         voice_features = np.array([[mdvp_fo, mdvp_fhi, mdvp_flo, mdvp_jitter, mdvp_jitter_abs, mdvp_rap, mdvp_ppq,
                                     jitter_ddp, mdvp_shimmer, mdvp_shimmer_db, shimmer_apq3, shimmer_apq5, mdvp_apq,
@@ -110,6 +114,3 @@ else:
 
         diagnosis = "Parkinson's Detected" if clinical_pred == 1 or voice_pred == 1 else "No Parkinson's Detected"
         st.success(f"Prediction: {diagnosis}")
-
-# Footer
-st.markdown("Developed with  using Streamlit")
